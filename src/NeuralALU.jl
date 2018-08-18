@@ -1,4 +1,4 @@
-module NALU
+module NeuralALU
 
 include("layers.jl")
 

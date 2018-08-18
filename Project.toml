@@ -1,0 +1,8 @@
+name = "NeuralALU"
+uuid = "e50f8154-a316-11e8-2ec9-353955dd493e"
+authors = ["Tejan Karmali <tejank10@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
