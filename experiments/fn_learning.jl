@@ -3,7 +3,7 @@ using Main.NeuralALU, Flux, Distributions
 using Flux:@epochs
 import Flux.params
 
-relu6(x) = min(max(x, 0.0), 6.0)
+relu6(x) = min(max(x, 0.0f0), 6.0f0)
 
 random_baseline = Chain(Dense(2,2), Dense(2,1))
 ACTIVATIONS = [tanh, σ, relu6, softsign, selu, elu, relu, identity]
@@ -12,16 +12,16 @@ TEST_FN = Dict("+" => (a,b)->a+b,
                "-" => (a,b)->a-b,
                "*" => (a,b)->a*b,
                "/" => (a,b)->a/b,
-               "²" => (a,b)->a^2#,
-               #"√" => (a,b)->√a
+               "²" => (a,b)->a^2,
+               "√" => (a,b)->√a
 	      )
 
 INP_DIM = 2
 HIDDEN_DIM = 2
 OUT_DIM = 1
-RANGE = [-5, 5]
+RANGE = [5, 10]
 
-EPOCHS = 10000
+EPOCHS = 100000
 
 function make_mlp(in_dim, hidden_dim, out_dim, non_lin)
     # hidden_dim is assumed to be an array of dimensions; empty if no hidden layer
@@ -64,30 +64,27 @@ function generate_data(dim, span, fn, train_size, test_size, sum_size)
 end
 
 nets = []
-optimizers = []
 
 for act_fn in ACTIVATIONS
     push!(nets, make_mlp(INP_DIM, [HIDDEN_DIM], OUT_DIM, act_fn))
-    push!(optimizers, SGD(params(nets[end])))
 end
 
 push!(nets, Chain(NAC(2,2), NAC(2,1)))
-push!(optimizers, SGD(params(nets[end])))
 
 push!(nets, Chain(NALU(2,2), NALU(2,1)))
-push!(optimizers, SGD(params(nets[end])))
 
 loss(x, y, net) = Flux.mse(net(x), y)
 
 for test_fn in keys(TEST_FN)
-    X_train, Y_train, X_test, Y_test = generate_data(100, RANGE, TEST_FN[test_fn], 5, 50, 5)
-    for (net, opt) in zip(nets, optimizers)
+    X_train, Y_train, X_test, Y_test = generate_data(100, RANGE, TEST_FN[test_fn], 500, 50, 5)
+    for (net,act_fn) in zip(nets, vcat(ACTIVATIONS, [NAC, NALU]))
+	opt = RMSProp(params(net))
 	for _ = 1:EPOCHS
-	    println("X", any(isnan.(X_train)))
-            Flux.train!(loss, [(X_train, Y_train, net)], opt)
+	    Flux.train!(loss, [(X_train, Y_train, net)], opt)
 	end
-        l = loss(X_test, Y_test, net)
-        print(l, " ", test_fn)
+        l_train = loss(X_train, Y_train, net)
+	l_test  = loss(X_test, Y_test, net)
+        println(" Test Function: ", test_fn, " Activation: ", act_fn, " Loss: ", l_test.data) 
     end
     println()
 end

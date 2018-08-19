@@ -5,14 +5,13 @@ function calc_fan(dims...; mode = "fan_in")
 
   fan_out = dims[1]
   fan_in = dims[2]
-  if num_dims > 2
-    receptive_field = prod(dims[3:end])
-    fan_in  *= receptive_field
-    fan_out *= receptive_field
-  end
+  # if num_dims > 2
+  #   receptive_field = prod(dims[1:end-2])
+  #   fan_in  *= receptive_field
+  #   fan_out *= receptive_field
+  # end
 
-  mode == "fan_in" && return fan_in
-  fan_out
+  mode == "fan_in" ? fan_in : fan_out
 end
 
 function calc_gain(nonlinearity, a = nothing)

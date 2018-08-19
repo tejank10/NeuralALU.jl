@@ -46,7 +46,7 @@ function (nalu::NALU)(x)
   log_inp = log.(abs.(x) .+ ϵ)
   m = exp.(nac(log_inp))
   g = σ_stable.(G*x .+ b)
-  @fix g .* a .+ (ones(size(g)) .- g) .* m
+  @fix g .* a .+ (1.0 .- g) .* m
 end
 
 Base.show(io::IO, l::NALU) = print(io, "NALU(", size(l.G, 2), ", ", size(l.G, 1), ")")
