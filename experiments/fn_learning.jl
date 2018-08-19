@@ -1,16 +1,20 @@
-using NeuralALU, Flux, Distributions
+include("../src/NeuralALU.jl")
+using Main.NeuralALU, Flux, Distributions
+using Flux:@epochs
+import Flux.params
 
 relu6(x) = min(max(x, 0.0), 6.0)
 
 random_baseline = Chain(Dense(2,2), Dense(2,1))
-ACTIVATIONS = [tanh, σ, relu6, softsign, selu, elu, relu, nothing]
+ACTIVATIONS = [tanh, σ, relu6, softsign, selu, elu, relu, identity]
 
-TEST_FN = ["+" => (a,b)->a+b,
-           "-" => (a,b)->a-b,
-           "*" => (a,b)->a*b,
-           "/" => (a,b)->a/b,
-           "²" => (a,b)->a^2,
-           "√" => (a,b)->√a]
+TEST_FN = Dict("+" => (a,b)->a+b,
+               "-" => (a,b)->a-b,
+               "*" => (a,b)->a*b,
+               "/" => (a,b)->a/b,
+               "²" => (a,b)->a^2#,
+               #"√" => (a,b)->√a
+	      )
 
 INP_DIM = 2
 HIDDEN_DIM = 2
@@ -27,9 +31,10 @@ function make_mlp(in_dim, hidden_dim, out_dim, non_lin)
     end
 
     layers = []
-    for i = 1:length(layer_dim) - 1
+    for i = 1:length(layer_dim) - 2
         push!(layers, Dense(layer_dim[i], layer_dim[i+1], non_lin))
     end
+    push!(layers, Dense(layer_dim[end-1], layer_dim[end]))
     Chain(layers...)
 end
 
@@ -50,10 +55,10 @@ function generate_data(dim, span, fn, train_size, test_size, sum_size)
     end
 
     idx = collect(1:train_size+test_size)
-    shfl_idx = shuffle(idx)
+    shfl_idx = idx#shuffle(idx)
 
-    X_train, Y_train = X[:, shfl_idx[1:train_size]], Y[:, shfl_idx[1:train_size]]
-    X_test, Y_test = X[:, shfl_idx[train_size:]], Y[:, shfl_idx[train_size:]]
+    X_train, Y_train = X[:, 1:train_size], Y[:,1:train_size]
+    X_test, Y_test = X[:, train_size+1:end], Y[:, train_size+1:end]
 
     X_train, Y_train, X_test, Y_test
 end
@@ -74,13 +79,15 @@ push!(optimizers, SGD(params(nets[end])))
 
 loss(x, y, net) = Flux.mse(net(x), y)
 
-for test_fn in TEST_FN
-    X_train, Y_train, X_test, Y_test = generate_data(100, RANGE, fn, 500, 50, 5)
-
+for test_fn in keys(TEST_FN)
+    X_train, Y_train, X_test, Y_test = generate_data(100, RANGE, TEST_FN[test_fn], 5, 50, 5)
     for (net, opt) in zip(nets, optimizers)
-        @epochs EPOCHS Flux.train!(loss, [(X_train, Y_train, net)], opt)
+	for _ = 1:EPOCHS
+	    println("X", any(isnan.(X_train)))
+            Flux.train!(loss, [(X_train, Y_train, net)], opt)
+	end
         l = loss(X_test, Y_test, net)
-        print(l, " ")
+        print(l, " ", test_fn)
     end
     println()
 end
