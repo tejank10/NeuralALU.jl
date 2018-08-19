@@ -1,7 +1,7 @@
 include("kaiming_init.jl")
 using Flux
 using Flux:@treelike
-using NNlib: @fix
+using NNlib: @fix, σ_stable
 
 ################################### NAC ########################################
 
@@ -17,9 +17,9 @@ NAC(in::Integer, out::Integer;
 
 @treelike NAC
 
-function (a::NAC)(x)
-  Ŵ, M̂, b = a.Ŵ, a.M̂, a.b
-  W = tanh.(Ŵ) .* σ.(M̂)
+function (nac::NAC)(x)
+  Ŵ, M̂, b = nac.Ŵ, nac.M̂, nac.b 
+  W = tanh.(Ŵ) .* σ_stable.(M̂)  
   @fix W*x .+ b
 end
 
@@ -40,13 +40,13 @@ NALU(in::Integer, out::Integer;
 
 @treelike NALU
 
-function (a::NALU)(x)
-  nac, G, b, ϵ = a.nac, a.G, a.b, a.ϵ
+function (nalu::NALU)(x)
+  nac, G, b, ϵ = nalu.nac, nalu.G, nalu.b, nalu.ϵ
   a = nac(x)
-  log_inp = nac(abs.(x) .+ ϵ)
-  m = exp.(log_inp)
-  g = σ.(G*x .+ b)
-  @fix g .* a + (1 .- g) .* m
+  log_inp = log.(abs.(x) .+ ϵ)
+  m = exp.(nac(log_inp))
+  g = σ_stable.(G*x .+ b)
+  @fix g .* a .+ (1.0 .- g) .* m
 end
 
 Base.show(io::IO, l::NALU) = print(io, "NALU(", size(l.G, 2), ", ", size(l.G, 1), ")")
