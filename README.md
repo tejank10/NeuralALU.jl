@@ -1,2 +1,9 @@
-# [WIP] NeuralALU.jl
-Neural Arithmetic Logic Unit using Flux.jl
+# NeuralALU.jl
+This is Julia implementation of Neural Arithmentic Logic Units (NALU) paper. (https://arxiv.org/abs/1808.00508) using Flux.jl.
+## Experiments completed:
+1. Function Learning (Interpolation)
+2. Function Learning (Extrapolation) (coming soon)
+
+## To Do
+1. MNIST Counting and Arithmetic Tasks
+2. Language to Number Translation Tasks
