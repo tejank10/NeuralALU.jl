@@ -7,3 +7,7 @@ This is Julia implementation of Neural Arithmentic Logic Units (NALU) paper. (ht
 ## To Do
 1. MNIST Counting and Arithmetic Tasks
 2. Language to Number Translation Tasks
+
+## References
+1. NALU paper
+2. https://github.com/kevinzakka/NALU-pytorch
