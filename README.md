@@ -9,5 +9,5 @@ This is Julia implementation of Neural Arithmentic Logic Units (NALU) paper. (ht
 2. Language to Number Translation Tasks
 
 ## References
-1. NALU paper
+1. [NALU paper]((https://arxiv.org/abs/1808.00508)
 2. https://github.com/kevinzakka/NALU-pytorch
